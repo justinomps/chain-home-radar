@@ -194,10 +194,10 @@ const ChainHomeStation = () => {
     ctx.font = '12px monospace';
     ctx.textAlign = 'center';
     
-    const numMarkers = Math.ceil(RADAR_RANGE / 20);
-    for (let i = 0; i <= numMarkers; i++) {
-      const x = (SWEEP_WIDTH / numMarkers) * i;
-      const range = i * 20;
+    const numMarkers = Math.floor(RADAR_RANGE / 20);
+for (let i = 0; i <= numMarkers; i++) {
+  const x = (SWEEP_WIDTH / RADAR_RANGE) * (i * 20);
+  const range = i * 20;
       
       ctx.beginPath();
       ctx.moveTo(x, 0);
