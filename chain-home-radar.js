@@ -313,7 +313,7 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
       ctx.font = '12px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(range.toString(), 0, radius + 15);
+      ctx.fillText(range.toString(), 0, radius +1);
     }
     
     // Draw cardinal directions
