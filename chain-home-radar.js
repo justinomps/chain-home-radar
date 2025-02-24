@@ -194,18 +194,18 @@ const ChainHomeStation = () => {
     ctx.font = '12px monospace';
     ctx.textAlign = 'center';
     
-    const numMarkers = Math.floor(RADAR_RANGE / 20);
-for (let i = 0; i <= numMarkers; i++) {
-  const x = (SWEEP_WIDTH / RADAR_RANGE) * (i * 20);
-  const range = i * 20;
-      
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, SCOPE_HEIGHT);
-      ctx.stroke();
-      
-      ctx.fillText(`${range}`, x, 15);
-    }
+   // Draw a marker every 20 miles, from 0 to RADAR_RANGE (inclusive)
+for (let range = 0; range <= RADAR_RANGE; range += 20) {
+  // Calculate the x position as a direct proportion of the total width
+  const x = (range / RADAR_RANGE) * SWEEP_WIDTH;
+  
+  ctx.beginPath();
+  ctx.moveTo(x, 0);
+  ctx.lineTo(x, SCOPE_HEIGHT);
+  ctx.stroke();
+  
+  ctx.fillText(`${range}`, x, 15);
+}
     
     ctx.textAlign = 'left';
     ctx.fillText('mi', SWEEP_WIDTH - 25, 15);
