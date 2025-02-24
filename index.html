@@ -4,16 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chain Home Radar</title>
+    
     <!-- Dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configure Tailwind with prefix to prevent conflicts -->
+    <script>
+        tailwind.config = {
+            prefix: 'ch-',
+            corePlugins: {
+                preflight: false,
+            }
+        }
+    </script>
+
     <!-- Add Babel for JSX support -->
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Optional: Add custom styles for container -->
+    <style>
+        /* Ensure the radar container doesn't affect other elements */
+        #chain-home-radar {
+            isolation: isolate;
+        }
+    </style>
 </head>
-<body class="bg-gray-900">
+<body>
     <div id="chain-home-radar"></div>
-    <!-- Change type to "text/babel" -->
     <script type="text/babel" src="chain-home-radar.js"></script>
 </body>
 </html>
