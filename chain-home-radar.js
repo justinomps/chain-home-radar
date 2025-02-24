@@ -503,7 +503,7 @@ const ChainHomeStation = () => {
                 </div>
                 <div className="ch-flex ch-items-center ch-gap-1">
                   <div className="ch-w-2 ch-h-2 ch-rounded-full ch-bg-red-500"></div>
-                  <span>Out of Range</span>
+                  <span>Out of Range (Distance/Altitude)</span>
                 </div>
               </div>
             </div>
