@@ -1,6 +1,5 @@
 // Chain Home Radar Component
 const ChainHomeStation = () => {
-  // Change useState to React.useState
   const [isPowered, setIsPowered] = React.useState(false);
   const [isTraceVisible, setIsTraceVisible] = React.useState(false);
   const [showAnalysis, setShowAnalysis] = React.useState(false);
@@ -10,24 +9,21 @@ const ChainHomeStation = () => {
   const [previousTraces, setPreviousTraces] = React.useState([]);
 
   // Constants
-  const RADAR_RANGE = 150; // miles (typical maximum range for high-altitude contacts)
-  const MIN_ALTITUDE = 1000; // feet
-  const MAX_ALTITUDE = 30000; // feet
-  const SWEEP_WIDTH = 1200; // pixels (increased from 800)
-  const SCOPE_HEIGHT = 300; // pixels (increased from 200)
-  const PLAN_VIEW_SIZE = 400; // pixels (back to original size)
-  const PHOSPHOR_PERSISTENCE = 20; // milliseconds
-  const MAX_PREVIOUS_TRACES = 3; // Number of ghost traces to maintain
-  const KM_TO_MILES = 0.621371; // conversion factor
+  const RADAR_RANGE = 150;
+  const MIN_ALTITUDE = 1000;
+  const MAX_ALTITUDE = 30000;
+  const SWEEP_WIDTH = 1200;
+  const SCOPE_HEIGHT = 300;
+  const PLAN_VIEW_SIZE = 400;
+  const PHOSPHOR_PERSISTENCE = 20;
+  const MAX_PREVIOUS_TRACES = 3;
+  const KM_TO_MILES = 0.621371;
 
-  // Change useRef to React.useRef
   const canvasRef = React.useRef(null);
   const planViewRef = React.useRef(null);
 
   // Function to calculate max detection range based on altitude
   const getMaxRangeForAltitude = (altitude) => {
-    // Historical Chain Home performance curve approximation
-    // Lower altitudes had significantly reduced range
     const altitudeFt = Math.max(altitude, MIN_ALTITUDE);
     const normalizedAlt = Math.min(altitudeFt / MAX_ALTITUDE, 1);
     return RADAR_RANGE * (0.4 + 0.6 * normalizedAlt);
@@ -36,9 +32,9 @@ const ChainHomeStation = () => {
   const AIRCRAFT_TYPES = [
     {
       type: "He 111",
-      minSpeed: 230, // mph
+      minSpeed: 230,
       maxSpeed: 255,
-      minAlt: 13000, // feet
+      minAlt: 13000,
       maxAlt: 22000,
       isEscort: false
     },
@@ -79,56 +75,42 @@ const ChainHomeStation = () => {
   // Create a target at a given range and bearing
   const createTarget = (range, bearing) => {
     const bearingRad = (bearing * Math.PI) / 180;
-    
-    // Select aircraft type - 70% chance of bomber, 30% chance of escort
     const isEscortMission = Math.random() < 0.3;
-    const possibleTypes = AIRCRAFT_TYPES.filter(
-      (a) => a.isEscort === isEscortMission
-    );
-    const aircraft =
-      possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
+    const possibleTypes = AIRCRAFT_TYPES.filter(a => a.isEscort === isEscortMission);
+    const aircraft = possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
     
-    // Generate realistic speed and altitude for the aircraft type
-    const speed =
-      aircraft.minSpeed +
-      Math.random() * (aircraft.maxSpeed - aircraft.minSpeed);
-    const altitude =
-      aircraft.minAlt + Math.random() * (aircraft.maxAlt - aircraft.minAlt);
+    const speed = aircraft.minSpeed + Math.random() * (aircraft.maxSpeed - aircraft.minSpeed);
+    const altitude = aircraft.minAlt + Math.random() * (aircraft.maxAlt - aircraft.minAlt);
     
     return {
-      id: Math.floor(Math.random() * 900) + 100, // Random 3-digit ID
+      id: Math.floor(Math.random() * 900) + 100,
       x: range * Math.cos(bearingRad),
       y: range * Math.sin(bearingRad),
       bearing: bearing,
-      speed: speed / 3600, // Convert mph to miles/s
+      speed: speed / 3600,
       altitude: altitude,
       aircraftType: aircraft.type,
       size: 20 + Math.random() * 5,
-      count: isEscortMission
-        ? 1 + Math.floor(Math.random() * 2)
-        : 3 + Math.floor(Math.random() * 8)
+      count: isEscortMission ? (1 + Math.floor(Math.random() * 2)) : (3 + Math.floor(Math.random() * 8))
     };
   };
 
   // Handle power state changes with sweep effect
   React.useEffect(() => {
     if (isPowered) {
-      // Generate random number of initial targets
       const numTargets = 1 + Math.floor(Math.random() * 5);
       const newTargets = [];
       
       for (let i = 0; i < numTargets; i++) {
-        // Use square root distribution for more even spatial distribution
         const range = Math.sqrt(Math.random()) * RADAR_RANGE;
-        const bearing = 110 + Math.random() * 100; // Keep the bearing limits
+        const bearing = 110 + Math.random() * 100;
         newTargets.push(createTarget(range, bearing));
       }
       
       setTargets(newTargets);
       setSweepPosition(0);
 
-      // Start sweep animation
-      const sweepDuration = 2000; // 2 seconds for full sweep
+      const sweepDuration = 2000;
       const startTime = Date.now();
       
       const sweepInterval = setInterval(() => {
@@ -140,7 +122,7 @@ const ChainHomeStation = () => {
           clearInterval(sweepInterval);
           setIsTraceVisible(true);
         }
-      }, 16); // ~60fps
+      }, 16);
 
       return () => clearInterval(sweepInterval);
     } else {
@@ -149,17 +131,15 @@ const ChainHomeStation = () => {
       setTargets([]);
     }
   }, [isPowered]);
-
   // Initialize and move targets
   React.useEffect(() => {
     if (!isPowered) return;
 
-    const UPDATE_RATE = 0.1; // seconds between updates
-
+    const UPDATE_RATE = 0.1;
     const moveInterval = setInterval(() => {
-      setTargets((currentTargets) => {
+      setTargets(currentTargets => {
         let newTargets = currentTargets
-          .map((target) => {
+          .map(target => {
             const range = Math.sqrt(target.x ** 2 + target.y ** 2);
             if (range < 5) return null;
             
@@ -175,9 +155,7 @@ const ChainHomeStation = () => {
           })
           .filter(Boolean);
 
-        // Add new targets if we're running low
         if (newTargets.length < 2) {
-          // Use square root distribution for more even spatial distribution
           const range = Math.sqrt(Math.random()) * RADAR_RANGE;
           const bearing = 110 + Math.random() * 100;
           newTargets.push(createTarget(range, bearing));
@@ -189,14 +167,14 @@ const ChainHomeStation = () => {
 
     return () => clearInterval(moveInterval);
   }, [isPowered]);
+
   const getSignalStrength = (target) => {
     const range = Math.sqrt(target.x ** 2 + target.y ** 2);
     const bearing = ((Math.atan2(target.y, target.x) * 180) / Math.PI + 360) % 360;
     const angleDiff = Math.abs(bearing - goniometerAngle);
     const normalizedDiff = angleDiff > 180 ? 360 - angleDiff : angleDiff;
-    const directionFactor = Math.pow(Math.cos(normalizedDiff * Math.PI / 180), 4);
+    const directionFactor = Math.pow(Math.cos((normalizedDiff * Math.PI) / 180), 4);
     
-    // Factor in range and altitude
     const maxRange = getMaxRangeForAltitude(target.altitude);
     const rangeFactor = Math.max(0, 1 - (range / maxRange));
     
@@ -210,7 +188,6 @@ const ChainHomeStation = () => {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, SWEEP_WIDTH, SCOPE_HEIGHT);
     
-    // Draw range markers and scale (always visible)
     ctx.strokeStyle = '#1F3F3F';
     ctx.lineWidth = 1;
     ctx.fillStyle = '#00FF00';
@@ -235,7 +212,6 @@ const ChainHomeStation = () => {
 
     if (!isPowered) return;
 
-    // Draw previous traces with decreasing intensity
     previousTraces.forEach((trace, index) => {
       const opacity = 0.3 * (1 - (index / MAX_PREVIOUS_TRACES));
       ctx.beginPath();
@@ -253,7 +229,6 @@ const ChainHomeStation = () => {
       ctx.stroke();
     });
 
-    // Draw current trace
     const currentTrace = [];
     ctx.beginPath();
     ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
@@ -297,7 +272,6 @@ const ChainHomeStation = () => {
       currentTrace.push({ x, y });
     }
     
-    // Draw line to end if not fully swept
     if (sweepPosition < SWEEP_WIDTH) {
       ctx.lineTo(SWEEP_WIDTH, baseline);
       currentTrace.push({ x: SWEEP_WIDTH, y: baseline });
@@ -305,7 +279,6 @@ const ChainHomeStation = () => {
     
     ctx.stroke();
 
-    // Update previous traces
     if (sweepPosition >= SWEEP_WIDTH) {
       setPreviousTraces(prev => {
         const newTraces = [...prev, { points: currentTrace, timestamp: Date.now() }];
@@ -316,8 +289,6 @@ const ChainHomeStation = () => {
       });
     }
   };
-
-  // Draw plan view
   const drawPlanView = () => {
     const canvas = planViewRef.current;
     if (!canvas || !isPowered) return;
@@ -325,14 +296,13 @@ const ChainHomeStation = () => {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, PLAN_VIEW_SIZE, PLAN_VIEW_SIZE);
     
-    // Set origin to center of canvas
     ctx.save();
     ctx.translate(PLAN_VIEW_SIZE/2, PLAN_VIEW_SIZE/2);
     
     // Draw range rings
     ctx.strokeStyle = '#666666';
     ctx.lineWidth = 1;
-    for (let range = 20; range <= RADAR_RANGE; range += 20) { // Every 20 miles
+    for (let range = 20; range <= RADAR_RANGE; range += 20) {
       const radius = (range / RADAR_RANGE) * (PLAN_VIEW_SIZE/2);
       ctx.beginPath();
       ctx.arc(0, 0, radius, 0, Math.PI * 2);
@@ -346,7 +316,7 @@ const ChainHomeStation = () => {
       ctx.fillText(range.toString(), 0, radius + 15);
     }
     
-    // Draw cardinal directions - now properly oriented
+    // Draw cardinal directions
     ctx.fillStyle = '#333333';
     ctx.font = '14px monospace';
     ctx.textAlign = 'center';
@@ -382,12 +352,11 @@ const ChainHomeStation = () => {
     );
     ctx.stroke();
     
-    // Draw arc
     ctx.beginPath();
     ctx.arc(0, 0, PLAN_VIEW_SIZE/2, minAngleRad, maxAngleRad);
     ctx.stroke();
     
-    // Draw goniometer angle
+    // Draw goniometer angle and visibility cone
     const angleRad = (goniometerAngle * Math.PI / 180) - Math.PI/2;
     ctx.strokeStyle = '#00FF00';
     ctx.lineWidth = 2;
@@ -399,7 +368,6 @@ const ChainHomeStation = () => {
     );
     ctx.stroke();
     
-    // Draw visibility cone
     ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
     ctx.beginPath();
     ctx.moveTo(0, 0);
@@ -413,18 +381,15 @@ const ChainHomeStation = () => {
       const rotatedX = (target.y / RADAR_RANGE) * (PLAN_VIEW_SIZE/2);
       const rotatedY = (-target.x / RADAR_RANGE) * (PLAN_VIEW_SIZE/2);
       
-      // Calculate if target is in range based on altitude and distance
       const range = Math.sqrt(target.x ** 2 + target.y ** 2);
       const maxRange = getMaxRangeForAltitude(target.altitude);
       const isInRange = range <= maxRange;
       
-      // Draw target blip with color based on visibility
-      ctx.fillStyle = isInRange ? '#22c55e' : '#ef4444';  // green-500 : red-500
+      ctx.fillStyle = isInRange ? '#22c55e' : '#ef4444';
       ctx.beginPath();
       ctx.arc(rotatedX, rotatedY, 3, 0, Math.PI * 2);
       ctx.fill();
       
-      // Draw target trail
       ctx.strokeStyle = isInRange ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -452,38 +417,38 @@ const ChainHomeStation = () => {
   }, [targets, goniometerAngle, isPowered]);
 
   return (
-    <div className="w-full max-w-7xl p-4">
-      <div className="bg-gray-800 rounded-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-green-500">
+    <div className="ch-w-full ch-max-w-7xl ch-p-4">
+      <div className="ch-bg-gray-800 ch-rounded-lg ch-p-6">
+        <div className="ch-flex ch-justify-between ch-items-center ch-mb-4">
+          <h2 className="ch-text-2xl ch-font-bold ch-text-green-500">
             Chain Home RDF Station
           </h2>
-          <div className="flex items-center">
-            <span className="text-green-500 mr-2 text-lg">Power:</span>
-            <label className="relative inline-flex items-center cursor-pointer">
+          <div className="ch-flex ch-items-center">
+            <span className="ch-text-green-500 ch-mr-2 ch-text-lg">Power:</span>
+            <label className="ch-relative ch-inline-flex ch-items-center ch-cursor-pointer">
               <input
                 type="checkbox"
-                className="sr-only peer"
+                className="ch-sr-only ch-peer"
                 checked={isPowered}
                 onChange={(e) => setIsPowered(e.target.checked)}
               />
-              <div className="w-14 h-7 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-600"></div>
+              <div className="ch-w-14 ch-h-7 ch-bg-gray-700 ch-peer-focus:outline-none ch-peer-focus:ring-4 ch-peer-focus:ring-green-800 ch-rounded-full ch-peer ch-peer-checked:after:translate-x-full ch-peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all ch-peer-checked:bg-green-600"></div>
             </label>
           </div>
         </div>
 
-        <div className="bg-black p-6 rounded-lg">
+        <div className="ch-bg-black ch-p-6 ch-rounded-lg">
           <canvas
             ref={canvasRef}
             width={SWEEP_WIDTH}
             height={SCOPE_HEIGHT}
-            className="w-full bg-black"
+            className="ch-w-full ch-bg-black"
           />
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-6">
-          <div className="flex items-center">
-            <span className="text-green-500 mr-2 text-lg">
+        <div className="ch-mt-6 ch-grid ch-grid-cols-2 ch-gap-6">
+          <div className="ch-flex ch-items-center">
+            <span className="ch-text-green-500 ch-mr-2 ch-text-lg">
               Goniometer Angle:
             </span>
             <input
@@ -492,58 +457,58 @@ const ChainHomeStation = () => {
               max="210"
               value={goniometerAngle}
               onChange={(e) => setGoniometerAngle(Number(e.target.value))}
-              className="flex-grow h-2"
+              className="ch-flex-grow ch-h-2"
               disabled={!isPowered}
             />
-            <span className="text-green-500 ml-2 text-lg">
+            <span className="ch-text-green-500 ch-ml-2 ch-text-lg">
               {goniometerAngle}°
             </span>
           </div>
-          <div className="flex items-center justify-end">
-            <span className="text-green-500 mr-2 text-lg">Analysis Panel:</span>
-            <label className="relative inline-flex items-center cursor-pointer">
+          <div className="ch-flex ch-items-center ch-justify-end">
+            <span className="ch-text-green-500 ch-mr-2 ch-text-lg">Analysis Panel:</span>
+            <label className="ch-relative ch-inline-flex ch-items-center ch-cursor-pointer">
               <input
                 type="checkbox"
-                className="sr-only peer"
+                className="ch-sr-only ch-peer"
                 checked={showAnalysis}
                 onChange={(e) => setShowAnalysis(e.target.checked)}
                 disabled={!isPowered}
               />
-              <div className="w-14 h-7 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-600"></div>
+              <div className="ch-w-14 ch-h-7 ch-bg-gray-700 ch-peer-focus:outline-none ch-peer-focus:ring-4 ch-peer-focus:ring-green-800 ch-rounded-full ch-peer ch-peer-checked:after:translate-x-full ch-peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all ch-peer-checked:bg-green-600"></div>
             </label>
           </div>
         </div>
 
         <div
-          className={`mt-4 p-4 bg-white rounded text-black transition-all duration-1000 ${
-            showAnalysis ? 'max-h-96' : 'max-h-0 overflow-hidden'
+          className={`ch-mt-4 ch-p-4 ch-bg-white ch-rounded ch-text-black ch-transition-all ch-duration-1000 ${
+            showAnalysis ? 'ch-max-h-96' : 'ch-max-h-0 ch-overflow-hidden'
           }`}
->
-          <h3 className="font-bold mb-2">
+        >
+          <h3 className="ch-font-bold ch-mb-2">
             What the RDF Station is Seeing: Range/Bearing Analysis
           </h3>
-          <div className="flex gap-4">
-            <div className="relative">
+          <div className="ch-flex ch-gap-4">
+            <div className="ch-relative">
               <canvas
                 ref={planViewRef}
                 width={PLAN_VIEW_SIZE}
                 height={PLAN_VIEW_SIZE}
-                className="bg-white rounded-lg border border-gray-300"
+                className="ch-bg-white ch-rounded-lg ch-border ch-border-gray-300"
               />
-              <div className="absolute top-2 right-2 bg-white/90 p-1.5 rounded border border-gray-300 text-xs">
-                <div className="font-bold mb-0.5">Target Status</div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <div className="ch-absolute ch-top-2 ch-right-2 ch-bg-white/90 ch-p-1.5 ch-rounded ch-border ch-border-gray-300 ch-text-xs">
+                <div className="ch-font-bold ch-mb-0.5">Target Status</div>
+                <div className="ch-flex ch-items-center ch-gap-1">
+                  <div className="ch-w-2 ch-h-2 ch-rounded-full ch-bg-green-500"></div>
                   <span>In Range</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                  <span>Out of Range (Distance or Altitude)</span>
+                <div className="ch-flex ch-items-center ch-gap-1">
+                  <div className="ch-w-2 ch-h-2 ch-rounded-full ch-bg-red-500"></div>
+                  <span>Out of Range</span>
                 </div>
               </div>
             </div>
-            <div className="flex-1">
-              <div className="grid grid-cols-6 gap-2 text-sm mb-1 border-b border-gray-300">
+            <div className="ch-flex-1">
+              <div className="ch-grid ch-grid-cols-6 ch-gap-2 ch-text-sm ch-mb-1 ch-border-b ch-border-gray-300">
                 <div>Raid Number</div>
                 <div>Range (mi)</div>
                 <div>Bearing (°)</div>
@@ -553,19 +518,15 @@ const ChainHomeStation = () => {
               </div>
               {targets.map((target, index) => {
                 const range = Math.sqrt(target.x ** 2 + target.y ** 2);
-                const bearing =
-                  ((Math.atan2(target.y, target.x) * 180) / Math.PI + 360) %
-                  360;
+                const bearing = ((Math.atan2(target.y, target.x) * 180) / Math.PI + 360) % 360;
                 const speedMph = target.speed * 3600;
 
                 return (
                   <div
                     key={index}
-                    className="grid grid-cols-6 gap-2 text-sm hover:bg-gray-100"
+                    className="ch-grid ch-grid-cols-6 ch-gap-2 ch-text-sm ch-hover:bg-gray-100"
                   >
-                    <div>
-                      {target.id} ({target.aircraftType})
-                    </div>
+                    <div>{target.id} ({target.aircraftType})</div>
                     <div>{range.toFixed(1)}</div>
                     <div>{bearing.toFixed(1)}°</div>
                     <div>{Math.round(target.altitude).toLocaleString()}</div>
@@ -585,4 +546,3 @@ const ChainHomeStation = () => {
 // Mount the component
 const root = ReactDOM.createRoot(document.getElementById('chain-home-radar'));
 root.render(React.createElement(ChainHomeStation));
-  
