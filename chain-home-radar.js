@@ -465,7 +465,7 @@ const ChainHomeStation = () => {
             </span>
           </div>
           <div className="ch-flex ch-items-center ch-justify-end">
-            <span className="ch-text-green-500 ch-mr-2 ch-text-lg">Analysis Panel:</span>
+            <span className="ch-text-green-500 ch-mr-2 ch-text-lg">Show what the RDF is seeing:</span>
             <label className="ch-relative ch-inline-flex ch-items-center ch-cursor-pointer">
               <input
                 type="checkbox"
