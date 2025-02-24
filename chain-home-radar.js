@@ -1,7 +1,7 @@
 // Chain Home Radar Component
 const ChainHomeStation = () => {
   const [isPowered, setIsPowered] = React.useState(true);
-  const [isTraceVisible, setIsTraceVisible] = React.useState(false);
+  const [isTraceVisible, setIsTraceVisible] = React.useState(true);
   const [showAnalysis, setShowAnalysis] = React.useState(false);
   const [goniometerAngle, setGoniometerAngle] = React.useState(160);
   const [targets, setTargets] = React.useState([]);
