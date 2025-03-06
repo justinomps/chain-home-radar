@@ -481,10 +481,10 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
 
         <div
           className={`ch-mt-4 ch-p-4 ch-bg-white ch-rounded ch-text-black ch-transition-all ch-duration-1000 ${
-            showAnalysis ? 'ch-max-h-96' : 'ch-max-h-0 ch-overflow-hidden'
+            showAnalysis ? 'ch-max-h-screen' : 'ch-max-h-0 ch-overflow-hidden'
           }`}
         >
-          <h3 className="ch-font-bold ch-mb-2">
+          <h3 className="ch-font-bold ch-mb-2 ch-text-black">
             What the RDF Station is Seeing: Range/Bearing Analysis
           </h3>
           <div className="ch-flex ch-gap-4">
