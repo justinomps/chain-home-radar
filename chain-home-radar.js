@@ -484,9 +484,9 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
             showAnalysis ? 'ch-max-h-screen' : 'ch-max-h-0 ch-overflow-hidden'
           }`}
         >
-          <h3 className="ch-font-bold ch-mb-2 ch-text-black">
+          <h4 className="ch-font-bold ch-mb-2 ch-text-black">
             What the RDF Station is Seeing: Range/Bearing Analysis
-          </h3>
+          </h4>
           <div className="ch-flex ch-gap-4">
             <div className="ch-relative">
               <canvas
