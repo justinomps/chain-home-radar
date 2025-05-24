@@ -6,7 +6,7 @@ const ChainHomeStation = () => {
   const [goniometerAngle, setGoniometerAngle] = React.useState(160);
   const [targets, setTargets] = React.useState([]);
   const [sweepPosition, setSweepPosition] = React.useState(0);
-  const [previousTraces, setPreviousTraces] = React.useState([]);
+  const [previousTraces, setPreviousTraces] = React.useState([]); // Keep for now, but disable usage
 
   // Constants
   const RADAR_RANGE = 150;
@@ -30,46 +30,11 @@ const ChainHomeStation = () => {
   };
 
   const AIRCRAFT_TYPES = [
-    {
-      type: "He 111",
-      minSpeed: 230,
-      maxSpeed: 255,
-      minAlt: 13000,
-      maxAlt: 22000,
-      isEscort: false
-    },
-    {
-      type: "Do 17",
-      minSpeed: 240,
-      maxSpeed: 265,
-      minAlt: 15000,
-      maxAlt: 23000,
-      isEscort: false
-    },
-    {
-      type: "Ju 88",
-      minSpeed: 250,
-      maxSpeed: 280,
-      minAlt: 15000,
-      maxAlt: 26000,
-      isEscort: false
-    },
-    {
-      type: "Bf 109",
-      minSpeed: 290,
-      maxSpeed: 350,
-      minAlt: 18000,
-      maxAlt: 32000,
-      isEscort: true
-    },
-    {
-      type: "Bf 110",
-      minSpeed: 270,
-      maxSpeed: 330,
-      minAlt: 16000,
-      maxAlt: 29000,
-      isEscort: true
-    }
+    { type: "He 111", minSpeed: 230, maxSpeed: 255, minAlt: 13000, maxAlt: 22000, isEscort: false },
+    { type: "Do 17", minSpeed: 240, maxSpeed: 265, minAlt: 15000, maxAlt: 23000, isEscort: false },
+    { type: "Ju 88", minSpeed: 250, maxSpeed: 280, minAlt: 15000, maxAlt: 26000, isEscort: false },
+    { type: "Bf 109", minSpeed: 290, maxSpeed: 350, minAlt: 18000, maxAlt: 32000, isEscort: true },
+    { type: "Bf 110", minSpeed: 270, maxSpeed: 330, minAlt: 16000, maxAlt: 29000, isEscort: true }
   ];
 
   // Create a target at a given range and bearing
@@ -78,10 +43,8 @@ const ChainHomeStation = () => {
     const isEscortMission = Math.random() < 0.3;
     const possibleTypes = AIRCRAFT_TYPES.filter(a => a.isEscort === isEscortMission);
     const aircraft = possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
-    
     const speed = aircraft.minSpeed + Math.random() * (aircraft.maxSpeed - aircraft.minSpeed);
     const altitude = aircraft.minAlt + Math.random() * (aircraft.maxAlt - aircraft.minAlt);
-    
     return {
       id: Math.floor(Math.random() * 900) + 100,
       x: range * Math.cos(bearingRad),
@@ -100,30 +63,24 @@ const ChainHomeStation = () => {
     if (isPowered) {
       const numTargets = 1 + Math.floor(Math.random() * 5);
       const newTargets = [];
-      
       for (let i = 0; i < numTargets; i++) {
         const range = Math.sqrt(Math.random()) * RADAR_RANGE;
         const bearing = 110 + Math.random() * 100;
         newTargets.push(createTarget(range, bearing));
       }
-      
       setTargets(newTargets);
       setSweepPosition(0);
-
       const sweepDuration = 2000;
       const startTime = Date.now();
-      
       const sweepInterval = setInterval(() => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / sweepDuration, 1);
         setSweepPosition(SWEEP_WIDTH * progress);
-        
         if (progress >= 1) {
           clearInterval(sweepInterval);
           setIsTraceVisible(true);
         }
       }, 16);
-
       return () => clearInterval(sweepInterval);
     } else {
       setIsTraceVisible(false);
@@ -131,10 +88,10 @@ const ChainHomeStation = () => {
       setTargets([]);
     }
   }, [isPowered]);
+
   // Initialize and move targets
   React.useEffect(() => {
     if (!isPowered) return;
-
     const UPDATE_RATE = 0.1;
     const moveInterval = setInterval(() => {
       setTargets(currentTargets => {
@@ -142,11 +99,9 @@ const ChainHomeStation = () => {
           .map(target => {
             const range = Math.sqrt(target.x ** 2 + target.y ** 2);
             if (range < 5) return null;
-            
             const bearingRad = (target.bearing * Math.PI) / 180;
             const distanceThisUpdate = target.speed * UPDATE_RATE;
             const newRange = range - distanceThisUpdate;
-            
             return {
               ...target,
               x: newRange * Math.cos(bearingRad),
@@ -154,17 +109,14 @@ const ChainHomeStation = () => {
             };
           })
           .filter(Boolean);
-
         if (newTargets.length < 2) {
           const range = Math.sqrt(Math.random()) * RADAR_RANGE;
           const bearing = 110 + Math.random() * 100;
           newTargets.push(createTarget(range, bearing));
         }
-
         return newTargets;
       });
     }, UPDATE_RATE * 1000);
-
     return () => clearInterval(moveInterval);
   }, [isPowered]);
 
@@ -173,133 +125,119 @@ const ChainHomeStation = () => {
     const bearing = ((Math.atan2(target.y, target.x) * 180) / Math.PI + 360) % 360;
     const angleDiff = Math.abs(bearing - goniometerAngle);
     const normalizedDiff = angleDiff > 180 ? 360 - angleDiff : angleDiff;
-    const directionFactor = Math.pow(Math.cos((normalizedDiff * Math.PI) / 180), 4);
-    
+    // CHANGED: Increased power (to 8) for stronger directional effect
+    const directionFactor = Math.pow(Math.cos((normalizedDiff * Math.PI) / 180), 8); 
     const maxRange = getMaxRangeForAltitude(target.altitude);
     const rangeFactor = Math.max(0, 1 - (range / maxRange));
-    
-    return directionFactor * rangeFactor * 2.0;
+    // CHANGED: Increased base strength (to 3.0) for larger blips
+    return directionFactor * rangeFactor * 3.0 * (target.count / 4); // Added target.count factor
   };
+
+  // ##################################################################
+  // #                  START OF A-SCOPE DRAWING CHANGES                #
+  // ##################################################################
 
   const drawTrace = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, SWEEP_WIDTH, SCOPE_HEIGHT);
-    
-    ctx.strokeStyle = '#1F3F3F';
+
+    ctx.strokeStyle = '#1F3F3F'; // Dark green for markers
     ctx.lineWidth = 1;
-    ctx.fillStyle = '#00FF00';
+    ctx.fillStyle = '#00FF00'; // Bright green for text
     ctx.font = '12px monospace';
     ctx.textAlign = 'center';
-    
-   // Draw a marker every 20 miles, from 0 to RADAR_RANGE (inclusive)
-for (let range = 0; range <= RADAR_RANGE; range += 20) {
-  // Calculate the x position as a direct proportion of the total width
-  const x = (range / RADAR_RANGE) * SWEEP_WIDTH;
-  
-  ctx.beginPath();
-  ctx.moveTo(x, 0);
-  ctx.lineTo(x, SCOPE_HEIGHT);
-  ctx.stroke();
-  
-  ctx.fillText(`${range}`, x, 15);
-}
-    
-    ctx.textAlign = 'left';
-    ctx.fillText('mi', SWEEP_WIDTH - 25, 15);
 
-    if (!isPowered) return;
-
-    previousTraces.forEach((trace, index) => {
-      const opacity = 0.3 * (1 - (index / MAX_PREVIOUS_TRACES));
+    // Draw range markers (Move text to bottom)
+    for (let range = 0; range <= RADAR_RANGE; range += 20) {
+      const x = (range / RADAR_RANGE) * SWEEP_WIDTH;
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(0, 255, 0, ${opacity})`;
-      ctx.lineWidth = 2;
-      
-      for (let i = 0; i < trace.points.length; i++) {
-        const point = trace.points[i];
-        if (i === 0) {
-          ctx.moveTo(point.x, point.y);
-        } else {
-          ctx.lineTo(point.x, point.y);
-        }
-      }
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, SCOPE_HEIGHT);
       ctx.stroke();
-    });
+      // CHANGED: Text at the bottom now
+      ctx.fillText(`${range}`, x, SCOPE_HEIGHT - 5); 
+    }
+    ctx.textAlign = 'left';
+    ctx.fillText('mi', SWEEP_WIDTH - 25, SCOPE_HEIGHT - 5);
 
-    const currentTrace = [];
+    if (!isPowered || !isTraceVisible) return;
+
+    // --- NEW: A-Scope Drawing Logic ---
+    ctx.strokeStyle = 'rgba(0, 255, 0, 0.9)'; // Bright green for trace
+    ctx.lineWidth = 1.5; // Make the trace line slightly thicker
+
+    // CHANGED: Baseline near the top (30% down from top)
+    const baseline = SCOPE_HEIGHT * 0.3; 
+    const GRASS_HEIGHT = 5; // NEW: Max height of grass spikes
+    const BLIP_WIDTH = 3;   // NEW: How many 'x' pixels a blip can cover
+
+    // Draw the baseline itself (optional, but adds clarity)
     ctx.beginPath();
-    ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
-    ctx.lineWidth = 2;
-
-    const baseline = SCOPE_HEIGHT * 0.8;
     ctx.moveTo(0, baseline);
-    currentTrace.push({ x: 0, y: baseline });
+    ctx.lineTo(sweepPosition, baseline);
+    ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)'; // Fainter baseline
+    ctx.stroke();
+    
+    // Set style for grass and blips
+    ctx.strokeStyle = 'rgba(0, 255, 0, 0.9)'; // Bright green
+    ctx.lineWidth = 1.5; // Thicker line for spikes
 
+    // We draw individual vertical spikes now
     for (let x = 0; x < sweepPosition; x++) {
       const range = (x / SWEEP_WIDTH) * RADAR_RANGE;
       let maxSignal = 0;
-      let peakX = x;
 
       targets.forEach(target => {
         const targetRange = Math.sqrt(target.x ** 2 + target.y ** 2);
         const rangeDiff = Math.abs(targetRange - range);
-        if (rangeDiff < 2) {
-          const peakFactor = 1 - (rangeDiff / 2);
+
+        if (rangeDiff < BLIP_WIDTH / 2) {
+          const peakFactor = 1 - (rangeDiff / (BLIP_WIDTH / 2));
           const signal = getSignalStrength(target) * peakFactor;
           if (signal > maxSignal) {
             maxSignal = signal;
-            peakX = x;
           }
         }
       });
 
-      const baselineNoise = (Math.random() - 0.5) * 8.5;
-      
-      let y = baseline + baselineNoise;
-      if (maxSignal > 0) {
-        const peakHeight = maxSignal * SCOPE_HEIGHT * 0.35;
-        const peakWidth = 0.5;
-        const distFromPeak = Math.abs(x - peakX);
-        if (distFromPeak < peakWidth) {
-          const triangleFactor = 1 - (distFromPeak / peakWidth);
-          y = baseline - (peakHeight * triangleFactor) + baselineNoise;
-        }
-      }
-      ctx.lineTo(x, y);
-      currentTrace.push({ x, y });
-    }
-    
-    if (sweepPosition < SWEEP_WIDTH) {
-      ctx.lineTo(SWEEP_WIDTH, baseline);
-      currentTrace.push({ x: SWEEP_WIDTH, y: baseline });
-    }
-    
-    ctx.stroke();
+      // CHANGED: Draw downwards. Start with grass height.
+      let y_bottom = baseline + Math.random() * GRASS_HEIGHT; 
 
-    if (sweepPosition >= SWEEP_WIDTH) {
-      setPreviousTraces(prev => {
-        const newTraces = [...prev, { points: currentTrace, timestamp: Date.now() }];
-        if (newTraces.length > MAX_PREVIOUS_TRACES) {
-          newTraces.shift();
-        }
-        return newTraces;
-      });
+      if (maxSignal > 0) {
+        // CHANGED: Calculate peak height downwards
+        const peakHeight = maxSignal * SCOPE_HEIGHT * 0.6; // 60% of scope height potential
+        y_bottom = baseline + peakHeight;
+      }
+      
+      // Ensure it doesn't go off-screen
+      y_bottom = Math.min(y_bottom, SCOPE_HEIGHT -1); // -1 to keep it visible
+
+      // Draw the vertical spike (grass or blip)
+      ctx.beginPath();
+      ctx.moveTo(x, baseline);
+      ctx.lineTo(x, y_bottom);
+      ctx.stroke();
     }
+    
+    // --- Temporarily disable previous traces ---
+    // We will re-implement persistence later in a more realistic way.
   };
+
+  // ##################################################################
+  // #                   END OF A-SCOPE DRAWING CHANGES                 #
+  // ##################################################################
+
   const drawPlanView = () => {
+    // ... (This function remains unchanged) ...
     const canvas = planViewRef.current;
     if (!canvas || !isPowered) return;
-    
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, PLAN_VIEW_SIZE, PLAN_VIEW_SIZE);
-    
     ctx.save();
     ctx.translate(PLAN_VIEW_SIZE/2, PLAN_VIEW_SIZE/2);
-    
-    // Draw range rings
     ctx.strokeStyle = '#666666';
     ctx.lineWidth = 1;
     for (let range = 20; range <= RADAR_RANGE; range += 20) {
@@ -307,16 +245,12 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
       ctx.beginPath();
       ctx.arc(0, 0, radius, 0, Math.PI * 2);
       ctx.stroke();
-      
-      // Add range labels
       ctx.fillStyle = '#333333';
       ctx.font = '12px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(range.toString(), 0, radius +1);
     }
-    
-    // Draw cardinal directions
     ctx.fillStyle = '#333333';
     ctx.font = '14px monospace';
     ctx.textAlign = 'center';
@@ -324,50 +258,32 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
     ctx.fillText('S', 0, PLAN_VIEW_SIZE/2 - 10);
     ctx.fillText('E', PLAN_VIEW_SIZE/2 - 10, 0);
     ctx.fillText('W', -PLAN_VIEW_SIZE/2 + 10, 0);
-    
-    // Draw RDF station
     ctx.fillStyle = '#00FF00';
     ctx.beginPath();
     ctx.arc(0, 0, 5, 0, Math.PI * 2);
     ctx.fill();
-    
-    // Draw boundary lines
     ctx.strokeStyle = '#00FF00';
     ctx.lineWidth = 1;
     const minAngleRad = (110 * Math.PI / 180) - Math.PI/2;
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(
-      Math.cos(minAngleRad) * (PLAN_VIEW_SIZE/2),
-      Math.sin(minAngleRad) * (PLAN_VIEW_SIZE/2)
-    );
+    ctx.lineTo(Math.cos(minAngleRad) * (PLAN_VIEW_SIZE/2), Math.sin(minAngleRad) * (PLAN_VIEW_SIZE/2));
     ctx.stroke();
-    
     const maxAngleRad = (210 * Math.PI / 180) - Math.PI/2;
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(
-      Math.cos(maxAngleRad) * (PLAN_VIEW_SIZE/2),
-      Math.sin(maxAngleRad) * (PLAN_VIEW_SIZE/2)
-    );
+    ctx.lineTo(Math.cos(maxAngleRad) * (PLAN_VIEW_SIZE/2), Math.sin(maxAngleRad) * (PLAN_VIEW_SIZE/2));
     ctx.stroke();
-    
     ctx.beginPath();
     ctx.arc(0, 0, PLAN_VIEW_SIZE/2, minAngleRad, maxAngleRad);
     ctx.stroke();
-    
-    // Draw goniometer angle and visibility cone
     const angleRad = (goniometerAngle * Math.PI / 180) - Math.PI/2;
     ctx.strokeStyle = '#00FF00';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(
-      Math.cos(angleRad) * (PLAN_VIEW_SIZE/2),
-      Math.sin(angleRad) * (PLAN_VIEW_SIZE/2)
-    );
+    ctx.lineTo(Math.cos(angleRad) * (PLAN_VIEW_SIZE/2), Math.sin(angleRad) * (PLAN_VIEW_SIZE/2));
     ctx.stroke();
-    
     ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
     ctx.beginPath();
     ctx.moveTo(0, 0);
@@ -375,41 +291,33 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
     ctx.arc(0, 0, PLAN_VIEW_SIZE/2, angleRad - spread, angleRad + spread);
     ctx.lineTo(0, 0);
     ctx.fill();
-    
-    // Draw targets
     targets.forEach(target => {
       const rotatedX = (target.y / RADAR_RANGE) * (PLAN_VIEW_SIZE/2);
       const rotatedY = (-target.x / RADAR_RANGE) * (PLAN_VIEW_SIZE/2);
-      
       const range = Math.sqrt(target.x ** 2 + target.y ** 2);
       const maxRange = getMaxRangeForAltitude(target.altitude);
       const isInRange = range <= maxRange;
-      
       ctx.fillStyle = isInRange ? '#22c55e' : '#ef4444';
       ctx.beginPath();
       ctx.arc(rotatedX, rotatedY, 3, 0, Math.PI * 2);
       ctx.fill();
-      
       ctx.strokeStyle = isInRange ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(rotatedX, rotatedY);
       const trailLength = 20;
       const bearingRad = (target.bearing * Math.PI / 180) - Math.PI/2;
-      ctx.lineTo(
-        rotatedX + Math.cos(bearingRad) * trailLength,
-        rotatedY + Math.sin(bearingRad) * trailLength
-      );
+      ctx.lineTo(rotatedX + Math.cos(bearingRad) * trailLength, rotatedY + Math.sin(bearingRad) * trailLength);
       ctx.stroke();
     });
-    
     ctx.restore();
   };
 
   React.useEffect(() => {
+    // CHANGED: Added `isTraceVisible` back in, ensure it redraws when trace appears
     const animationFrame = requestAnimationFrame(drawTrace);
     return () => cancelAnimationFrame(animationFrame);
-  }, [targets, goniometerAngle, isPowered, isTraceVisible, sweepPosition]);
+  }, [targets, goniometerAngle, isPowered, isTraceVisible, sweepPosition]); // Updated dependencies
 
   React.useEffect(() => {
     const animationFrame = requestAnimationFrame(drawPlanView);
@@ -417,6 +325,7 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
   }, [targets, goniometerAngle, isPowered]);
 
   return (
+    // ... (The JSX remains unchanged) ...
     <div className="ch-w-full ch-max-w-7xl ch-p-4">
       <div className="ch-bg-gray-800 ch-rounded-lg ch-p-6">
         <div className="ch-flex ch-justify-between ch-items-center ch-mb-4">
@@ -436,7 +345,6 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
             </label>
           </div>
         </div>
-
         <div className="ch-bg-black ch-p-6 ch-rounded-lg">
           <canvas
             ref={canvasRef}
@@ -445,7 +353,6 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
             className="ch-w-full ch-bg-black"
           />
         </div>
-
         <div className="ch-mt-6 ch-grid ch-grid-cols-2 ch-gap-6">
           <div className="ch-flex ch-items-center">
             <span className="ch-text-green-500 ch-mr-2 ch-text-lg">
@@ -478,7 +385,6 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
             </label>
           </div>
         </div>
-
         <div
           className={`ch-mt-4 ch-p-4 ch-bg-white ch-rounded ch-text-black ch-transition-all ch-duration-1000 ${
             showAnalysis ? 'ch-max-h-screen' : 'ch-max-h-0 ch-overflow-hidden'
@@ -520,7 +426,6 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
                 const range = Math.sqrt(target.x ** 2 + target.y ** 2);
                 const bearing = ((Math.atan2(target.y, target.x) * 180) / Math.PI + 360) % 360;
                 const speedMph = target.speed * 3600;
-
                 return (
                   <div
                     key={index}
@@ -544,5 +449,6 @@ for (let range = 0; range <= RADAR_RANGE; range += 20) {
 };
 
 // Mount the component
-const root = ReactDOM.createRoot(document.getElementById('chain-home-radar'));
-root.render(React.createElement(ChainHomeStation));
+// Make sure you have a div with id="chain-home-radar" in your HTML.
+// const root = ReactDOM.createRoot(document.getElementById('chain-home-radar'));
+// root.render(React.createElement(ChainHomeStation));
